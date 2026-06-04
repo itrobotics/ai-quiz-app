@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+.DS_Store
+*.log
+
+# clasp 登入憑證（切勿提交）
+.clasprc.json
+gas/.clasp.json
+
+*.tmp

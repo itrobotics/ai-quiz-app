@@ -1,0 +1,13 @@
+# 不推送到 GAS 的檔案
+node_modules/**
+src/**
+dist/**
+docs/**
+*.md
+*.env
+*.env.*
+package.json
+package-lock.json
+vite.config.js
+index.html
+.gitignore
