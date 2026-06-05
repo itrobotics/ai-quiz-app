@@ -40,6 +40,8 @@ function doGet(e) {
         return handleGetAllQuestions();
       case 'getStats':
         return handleGetStats(e.parameter.questionId);
+      case 'getAllAnswers':
+        return handleGetAllAnswers();
       default:
         return errorResponse('未知的 action: ' + action);
     }

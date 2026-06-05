@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import {
-  getAllQuestions, createQuestion, updateQuestion, deleteQuestion, getStats,
+  getAllQuestions, createQuestion, updateQuestion, deleteQuestion, getStats, getAllAnswers,
 } from '../api.js'
 import StatChart from '../components/StatChart.jsx'
 
@@ -17,7 +17,6 @@ const s = {
   page: { minHeight: 'calc(100vh - 48px)', background: '#F8FAFC', padding: '24px 16px' },
   maxW: { maxWidth: '1100px', margin: '0 auto' },
   title: { fontSize: '1.4rem', fontWeight: '700', color: '#1E293B', marginBottom: '24px' },
-  grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' },
   card: {
     background: '#fff', borderRadius: '12px',
     boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '24px',
@@ -197,6 +196,39 @@ export default function TeacherPage() {
     setFormErr('')
   }
 
+  // ── 匯出答題記錄 CSV（FR-009）──────────────────
+  const [exporting, setExporting] = useState(false)
+  function csvCell(v) {
+    const str = v == null ? '' : String(v)
+    return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str
+  }
+  async function handleExportCsv() {
+    setExporting(true)
+    try {
+      const data = await getAllAnswers()
+      const rows = data.answers || []
+      if (rows.length === 0) { alert('目前沒有答題記錄'); return }
+      const cols = ['questionId', 'sessionId', 'answer', 'timestamp']
+      const csv = [cols.join(',')]
+        .concat(rows.map(r => cols.map(c => csvCell(r[c])).join(',')))
+        .join('\r\n')
+      // 前置 UTF-8 BOM，Excel 開啟中文不亂碼
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `quiz-answers-${new Date().toISOString().slice(0, 10)}.csv`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      alert('匯出失敗：' + (err.message || '請重試'))
+    } finally {
+      setExporting(false)
+    }
+  }
+
   if (loading) {
     return (
       <div style={{ ...s.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -209,7 +241,7 @@ export default function TeacherPage() {
     <div style={s.page}>
       <div style={s.maxW}>
         <h1 style={s.title}>🎓 講師後台</h1>
-        <div style={s.grid}>
+        <div className="teacher-grid">
           {/* ── 左欄：題目管理 ── */}
           <div>
             {/* 新增 / 編輯表單 */}
@@ -262,7 +294,18 @@ export default function TeacherPage() {
 
             {/* 題目清單 */}
             <div style={{ ...s.card, marginTop: '20px' }}>
-              <p style={s.sectionTitle}>📋 題目清單（共 {questions.length} 題）</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: '10px', marginBottom: '16px' }}>
+                <span style={{ fontSize: '1rem', fontWeight: '600', color: '#374151' }}>
+                  📋 題目清單（共 {questions.length} 題）
+                </span>
+                <button
+                  style={{ ...s.btn('#0EA5E9'), opacity: exporting ? 0.6 : 1 }}
+                  onClick={handleExportCsv}
+                  disabled={exporting}
+                >
+                  {exporting ? '匯出中…' : '⬇ 匯出 CSV'}
+                </button>
+              </div>
               {questions.length === 0 && (
                 <p style={{ color: '#94A3B8', textAlign: 'center', padding: '20px' }}>
                   尚無題目，請從上方新增
@@ -327,10 +370,15 @@ export default function TeacherPage() {
         </div>
       </div>
 
-      {/* RWD */}
+      {/* RWD：grid 欄寬寫在 CSS class（非 inline），media query 才能在 ≦768px 覆蓋為單欄 */}
       <style>{`
+        .teacher-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 24px;
+        }
         @media (max-width: 768px) {
-          .teacher-grid { grid-template-columns: 1fr !important; }
+          .teacher-grid { grid-template-columns: 1fr; }
         }
       `}</style>
     </div>

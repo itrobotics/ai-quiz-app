@@ -100,6 +100,14 @@ export async function getStats(questionId) {
   return gasGet({ action: 'getStats', questionId })
 }
 
+/**
+ * 取得所有答題記錄（講師匯出 CSV 用）
+ * @returns {{ answers: Object[] }}
+ */
+export async function getAllAnswers() {
+  return gasGet({ action: 'getAllAnswers' })
+}
+
 // ─── Session 工具 ─────────────────────────────────────────────
 
 /**

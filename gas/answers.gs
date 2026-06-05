@@ -70,3 +70,11 @@ function handleGetStats(questionId) {
 
   return jsonResponse({ success: true, stats: stats });
 }
+
+// ─── 取得所有答題記錄（講師匯出 CSV 用）─────────────────────────
+
+function handleGetAllAnswers() {
+  const sheet = getSheet(SHEET_ANSWERS);
+  const answers = sheetToJson(sheet);
+  return jsonResponse({ success: true, answers: answers });
+}
