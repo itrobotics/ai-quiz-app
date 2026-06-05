@@ -264,7 +264,36 @@ Content-Type: text/plain
 {"action":"submitAnswer","data":{"questionId":"q-xxxx","sessionId":"sess-demo","answer":"A"}}
 ```
 
-## B7. 七個 action 測試對照卡
+## B7. 方法六：在 GAS 編輯器直接執行（純後端，免瀏覽器/PowerShell）
+
+前面五種都從「前端送、看回應」的角度測。這個方法反過來，**直接在 GAS 編輯器裡跑後端函式、把結果印到「執行記錄」**，完全不碰前端——除錯後端邏輯最快。
+
+本專案已附測試集 `gas/tests.gs`，`clasp push` 上去（或貼進 GAS 編輯器）後即可使用。
+
+**兩個必懂的前提：**
+
+1. **「執行」只能跑「沒有參數」的函式。** 像 `handleDeleteQuestion(data)` 需要參數，直接選它按執行會因 `data` 為 undefined 而出錯——所以 `tests.gs` 把每個操作都包成無參數的 `test_xxx`。
+2. **handler 回傳的是 `ContentService` 物件，不是字串。** 要看內容得用 `.getContent()` 取出 JSON，否則只會印出像 `TextOutput@1a2b` 的無用訊息。
+
+**操作步驟：**
+
+1. `tests.gs` 存檔（或 push 上去）。
+2. 編輯器上方「函式下拉選單」選一個 `test_xxx`（例如 `test_fullFlow`）。
+3. 按「執行」，第一次會要求授權，同意即可。
+4. 下方「執行記錄 / Execution log」就會印出結果（Ctrl+Enter 開啟）。
+
+**`tests.gs` 提供的函式：**
+
+| 函式 | 作用 |
+|------|------|
+| `test_getActiveQuestion` / `test_getAllQuestions` / `test_getStats` / `test_getAllAnswers` | 四個讀取類，安全、隨便跑 |
+| `test_createQuestion` / `test_updateQuestion_open` / `test_updateQuestion_close` / `test_submitAnswer` / `test_deleteQuestion` | 五個寫入類，會動到 Sheet 資料 |
+| `test_fullFlow` | 一條龍：新增→開放→作答→看統計→關閉→刪除，跑完自動清理，最適合上課示範 |
+
+**附註：`console.log` vs `_log`**
+`console.log` 是 GAS 內建的印訊息函式；`_log` 是 `tests.gs` 裡自訂的小幫手，**底層還是呼叫 `console.log`**，只是多做兩件事：先 `.getContent()` 取出 JSON 字串、再排版美化。換句話說 `console.log` 你到哪都能用，`_log` 只是我們專案為了少打字、把回應印漂亮而包的工具。
+
+## B8. 七個 action 測試對照卡
 
 | Action | 方法 | 怎麼測 | 預期成功回應 | 驗證點 |
 |--------|------|--------|--------------|--------|
